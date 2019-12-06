@@ -5,7 +5,9 @@ class UiObject {
 class MenuItem extends UiObject {
     enabled: boolean;
     onClick = (handler: () => void) => {
-        handler();
+        if (this.enabled) {
+            handler();
+        }
     }
 }
 
@@ -16,7 +18,9 @@ class ToolbarButton extends UiObject {
 class Control extends UiObject {
     enabled: boolean;
     onClick = (handler: () => void) => {
-        handler();
+        if (this.enabled) {
+            handler();
+        }
     }
 }
 
@@ -34,33 +38,48 @@ class Checkbox extends Control {
 
 //клиентский код
 
+//клиентский интерфейс
 interface UiElement {
     enabled: boolean;
     onClick: (handler: () => void) => void
 }
 
-class ToolbarButtonAdapter implements UiElement {
-    private toolbarButton: ToolbarButton;
 
-    constructor(adaptElement: ToolbarButton) {
-        this.toolbarButton = adaptElement;
+//адаптер для работы клиентского интерфейса с библиотекой
+class UiObjectAdapter implements UiElement {
+    adapted: UiObject;
+
+    constructor(adapted: UiObject) {
+        this.adapted = adapted;
     }
 
     set enabled(value: boolean) {
-        this.toolbarButton.enabled = value;
+        if (this.adapted instanceof MenuItem || this.adapted instanceof ToolbarButton || this.adapted instanceof Control) {
+            this.adapted.enabled = value;
+        }
     }
 
     get enabled() {
-        return this.toolbarButton.enabled;
+        if (this.adapted instanceof ToolbarButton || this.adapted instanceof ToolbarButton || this.adapted instanceof Control) {
+            return this.adapted.enabled;
+        }
     }
 
     onClick = (handler: () => void) => {
-            handler();
-    }
+        if (this.adapted instanceof MenuItem || this.adapted instanceof Control) {
+            this.adapted.onClick(handler);
+        }
+
+        if (this.adapted instanceof ToolbarButton) {
+            if (this.adapted) {
+                handler();
+            }
+        }
+    };
 }
 
 abstract class Action {
-    private controls: Array<UiElement>;
+    private controls: Array<UiObjectAdapter>;
     public _enabled: boolean;
 
     get enabled(): boolean {
@@ -69,12 +88,12 @@ abstract class Action {
 
     set enabled(value: boolean) {
         this._enabled = value;
-        this.controls.forEach((control: UiElement) => {
+        this.controls.forEach((control: UiObjectAdapter) => {
             control.enabled = value;
         });
     }
 
-    setControls(controls: UiElement[]) {
+    setControls(controls: UiObjectAdapter[]) {
         this.controls = controls;
     }
 
@@ -90,13 +109,12 @@ class ExploerUpActions extends Action {
 
 const action = new ExploerUpActions();
 
-const menuItem = new MenuItem();
-const toolbarButton = new ToolbarButtonAdapter(new ToolbarButton());
-const radioButton = new RadioButton();
-const control = new Control();
+const menuItem = new UiObjectAdapter(new MenuItem());
+const toolbarButton = new UiObjectAdapter(new ToolbarButton());
+const radioButton = new UiObjectAdapter(new RadioButton());
+const control = new UiObjectAdapter(new Control());
 
 action.setControls([menuItem, control, radioButton, toolbarButton]);
 action.enabled = true;
 
-toolbarButton.onClick(action.execute);
-
+menuItem.onClick(action.execute);
