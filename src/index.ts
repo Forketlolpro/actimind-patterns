@@ -93,8 +93,8 @@ abstract class Action {
         });
     }
 
-    setControls(controls: UiObjectAdapter[]) {
-        this.controls = controls;
+    setControls(controls: UiObject[]) {
+        this.controls = controls.map(item=> new UiObjectAdapter(item));
     }
 
     abstract execute(): void;
@@ -109,10 +109,10 @@ class ExploerUpActions extends Action {
 
 const action = new ExploerUpActions();
 
-const menuItem = new UiObjectAdapter(new MenuItem());
-const toolbarButton = new UiObjectAdapter(new ToolbarButton());
-const radioButton = new UiObjectAdapter(new RadioButton());
-const control = new UiObjectAdapter(new Control());
+const menuItem = new MenuItem();
+const toolbarButton = new ToolbarButton();
+const radioButton = new RadioButton();
+const control = new Control();
 
 action.setControls([menuItem, control, radioButton, toolbarButton]);
 action.enabled = true;
